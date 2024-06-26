@@ -1,14 +1,30 @@
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useWorkoutsContext } from "../hooks/useWorkoutsContext"
 
 // components
 import WorkoutDetails from "../components/WorkoutDetails"
 import WorkoutForm from "../components/WorkoutForm"
 
-const Home = (props) => {
+const Home = () => {
   const { workouts, dispatch } = useWorkoutsContext()
+  const [ csrfToken, setCsrfToken ] = useState("");
 
   useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try{
+        const response = await fetch("/api/csrf-token", {
+          credentials: "same-origin"
+        });
+        const data = await response.json();
+        setCsrfToken(data.csrfToken);
+        console.log('CSRF token:', data.csrfToken);
+      } catch (err) {
+        console.error('Failed to catch CSRF Token', err)
+      }
+    };
+
+    fetchCsrfToken(); //call the fetch function
+
     const fetchWorkouts = async () => {
       const response = await fetch('/api/workouts')
       const json = await response.json()
@@ -25,10 +41,10 @@ const Home = (props) => {
     <div className="home">
       <div className="workouts">
         {workouts && workouts.map(workout => (
-          <WorkoutDetails workout={workout} key={workout._id} />
+          <WorkoutDetails workout={workout} key={workout._id} csrf={csrfToken}/>
         ))}
       </div>
-      <WorkoutForm csrfToken={props.csrfToken}/>
+      <WorkoutForm csrf={csrfToken}/>
     </div>
   )
 }
